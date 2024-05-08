@@ -1,0 +1,403 @@
+---
+title: "ITMD/ITMS/STAT 514 Homework 4"
+author: "GURUTEJA KANDERI"
+date: "Due Date 4/11"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+   echo = TRUE, 
+   fig.align = 'center' , 
+   out.width="80%"
+)
+```
+
+# Part I: Review of basic concepts in statistical learning (15 points)
+
+You will spend some time thinking of some real-life applications for statistical learning. 
+
+### Question 1. 
+Describe three real-life applications in which classification might be useful. Describe the response, as well as the predictors. Is the goal of each application inference or prediction? Explain your answer. 
+
+> 1. Email Spam Detection:
+Response/Target Variable: Whether an email is spam or not (binary classification)
+Predictors: Subject line text, email body text, sender's email address, presence of links or attachments, etc.
+Goal: Prediction. The goal is to accurately classify incoming emails as spam or not spam based on the available predictors, allowing for better email management and filtering.
+2. Credit Card Fraud Detection:
+Response/Target Variable: Whether a transaction is fraudulent or legitimate (binary classification)
+Predictors: Transaction amount, location, time, merchant category, card holder's spending patterns, IP address, etc.
+Goal: Prediction. The objective is to predict whether a given transaction is fraudulent or not, based on the predictors, to prevent financial losses and protect customers.
+3. Disease Diagnosis:
+Response/Target Variable: The presence or absence of a particular disease or medical condition (binary or multi-class classification)
+Predictors: Symptoms, medical test results, patient's age, gender, family history, lifestyle factors, etc.
+Goal: Both inference and prediction. Inference is involved in understanding the relationship between the predictors and the disease, while prediction is necessary to classify new cases accurately for diagnosis and treatment.
+
+### Question 2. 
+Describe three real-life applications in which regression might be useful. Describe the response, as well as the predictors. Is the goal of each application inference or prediction? Explain your answer.
+
+> 1. House Price Prediction:
+Response/Target Variable: The sale price of a house (continuous variable)
+Predictors: Square footage, number of bedrooms and bathrooms, location, age of the property, neighborhood characteristics, proximity to amenities, etc.
+Goal: Prediction. The objective is to predict the sale price of a house as accurately as possible based on the available predictors, which is crucial for real estate valuations, investment decisions, and pricing strategies.
+2. Energy Consumption Forecasting:
+Response/Target Variable: The amount of energy consumed by a building or facility (continuous variable)
+Predictors: Building size, occupancy levels, weather conditions (temperature, humidity), time of day/year, energy efficiency measures in place, etc.
+Goal: Both inference and prediction. Inference is involved in understanding the relationships between predictors and energy consumption, which can inform energy-saving strategies. Prediction is necessary to forecast future energy demands accurately for efficient resource allocation and cost management.
+3. Sales Forecasting:
+Response/Target Variable: The sales volume or revenue of a product or service (continuous variable)
+Predictors: Advertising expenditure, pricing, economic indicators, consumer trends, seasonal factors, competitor activity, etc.
+Goal: Prediction. The goal is to predict future sales as accurately as possible based on the available predictors, which is essential for inventory management, production planning, budgeting, and strategic decision-making in businesses.
+
+### Question 3.
+Describe three real-life applications in which cluster analysis might be useful.
+
+> 
+1. Customer Segmentation:
+In the retail or marketing domain, cluster analysis can be used to group customers into different segments based on their purchasing behavior, demographic characteristics, preferences, and other relevant attributes. This segmentation allows businesses to tailor their products, services, and marketing strategies to better cater to the specific needs and preferences of each customer segment, ultimately improving customer satisfaction and increasing sales.
+2. Gene Expression Analysis:
+In bioinformatics and genomics research, cluster analysis is commonly used to group genes or gene expression patterns into distinct clusters based on their similarity. This grouping can help identify co-expressed genes, which may be involved in similar biological processes or pathways. Researchers can then focus their investigations on specific clusters of interest, leading to a better understanding of gene functions and their roles in various cellular mechanisms.
+3. Anomaly Detection Cluster analysis:
+It can be employed for anomaly detection in various domains, such as cybersecurity, fraud detection, and manufacturing quality control. In this application, data points that deviate significantly from the identified clusters may be flagged as potential anomalies or outliers. For example, in network security, cluster analysis can group normal network traffic patterns, and any data points that do not fit into these clusters could be investigated as potential cyber threats or intrusion attempts. 
+
+
+# Part II: Association between one categorical and one numerical variables (15 points)
+
+* [Obtaining the Abalone dataset](https://archive.ics.uci.edu/dataset/1/abalone)
+
+### Tasks
+
+For the following exercises, work with the `alabone` data set.Please read the `alabone.name` file to understand each attribute.
+
+
+#### 1. Import the `abalone.data` data set and name it `abalone`. (5 points)
+
+```{r}
+abalone <- read.table("D:/Spring 2024/programming for data analytics/abalone/abalone.data", header = FALSE)
+```
+
+
+
+#### 2. Please construct an ANOVA test for `Sex` and `Rings`. What is your conclusion? (10 points)
+
+```{r}
+# Read the data file and assign column names
+abalone <- read.table("D:/Spring 2024/programming for data analytics/abalone/abalone.data", header = FALSE, col.names = c("Sex", "Length", "Diameter", "Height", "Whole.weight", "Shucked.weight", "Viscera.weight", "Shell.weight", "Rings"), sep = ",")
+
+# Fit the ANOVA model
+model <- aov(Rings ~ Sex, data = abalone)
+
+# Print the summary
+summary(model)
+```
+
+>               Df Sum Sq Mean Sq F value Pr(>F)    
+Sex            2   8381    4191   499.3 <2e-16 ***
+Residuals   4174  35030       8                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+The p-value associated with the Sex factor is extremely small (less than 2e-16, which is effectively 0). Since this p-value is much smaller than the commonly used significance level of 0.05, we can reject the null hypothesis.
+
+Rejecting the null hypothesis means that there is strong statistical evidence to conclude that the mean number of rings (age) is significantly different between the levels of Sex (male, female, and infant abalones).
+
+In other words, the ANOVA test shows that the average age of abalones varies significantly depending on whether they are male, female, or infant. The extremely small p-value indicates that the observed differences in mean age between the sex levels are highly unlikely to have occurred by chance if the null hypothesis (no difference between groups) were true.
+
+
+# Part III: Multiple Linear Regression (80 points)
+
+
+### Tasks
+
+We will establish regression models to predict `Rings`.
+
+### 1. Split data set into 80:20 train and test data with name `abaloneTraining` and `abaloneTest` respectively (10 points)
+
+```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# Determine the number of rows in the dataset
+n_rows <- nrow(abalone)
+
+# Create indices for training (80%) and testing (20%) data
+train_indices <- sample(1:n_rows, 0.8 * n_rows, replace = FALSE)
+test_indices <- setdiff(1:n_rows, train_indices)
+
+# Split the dataset into training and testing sets
+abaloneTraining <- abalone[train_indices, ]
+abaloneTest <- abalone[test_indices, ]
+
+# Check the dimensions of the training and testing datasets
+cat("Number of rows in abaloneTraining 80%:", nrow(abaloneTraining), "\n")
+cat("Number of rows in abaloneTest 20 %:", nrow(abaloneTest), "\n")
+
+
+```
+> Number of rows in abaloneTraining 80%: 3341 
+Number of rows in abaloneTest 20 %: 836 
+
+### 2. Multiple Regression Model (20 points)
+
+* Please construct a multiple regression model with `abaloneTraining` to predict `Rings`.
+
+```{r}
+# Fit multiple linear regression model using abaloneTraining dataset
+model <- lm(Rings ~ ., data = abaloneTraining)
+
+# Print the summary of the regression model
+summary(model)
+
+```
+
+* Please indicate the statistical significant features and `RSE` and $R^2$.
+
+> Significant Features:
+
+The following features have statistically significant effects on predicting Rings:
+
+Intercept (p-value < 2e-16)
+SexI (p-value: 6.54e-14)
+Diameter (p-value: 9.19e-07)
+Height (p-value: 1.26e-09)
+Whole.weight (p-value < 2e-16)
+Shucked.weight (p-value < 2e-16)
+Viscera.weight (p-value: 3.31e-13)
+Shell.weight (p-value: 8.05e-13)
+Non-Significant Features:
+
+The following features do not significantly contribute to predicting Rings:
+SexM (p-value: 0.478)
+Length (p-value: 0.791)
+
+Residual Standard Error (RSE):
+
+RSE: 2.184
+The Residual Standard Error (RSE) measures the typical size of residuals (differences between observed and predicted values). Here, RSE is approximately 2.184.
+
+(R-squared) Value:
+Multiple R-SQUARE: 0.5426
+Adjusted R-SQUARE:0.5414
+(Multiple R-squared) of 0.5426 indicates that about 54.26% of the variance in Rings can be explained by the included predictors. The Adjusted R-SQAURE considers the number of predictors in the model.
+
+* Use this model to predict `Rings` in `abaloneTesting` and calculate `MAE` and `MSE`.
+
+```{r}
+# Predict Rings using the fitted model on abaloneTesting
+predicted <- predict(model, newdata = abaloneTest)
+
+# Calculate Mean Absolute Error (MAE)
+MAE <- mean(abs(predicted - abaloneTest$Rings))
+
+# Calculate Mean Squared Error (MSE)
+MSE <- mean((predicted - abaloneTest$Rings)^2)
+
+# Print MAE and MSE
+cat("Mean Absolute Error (MAE):", MAE, "\n")
+cat("Mean Squared Error (MSE):", MSE, "\n")
+
+```
+
+> Mean Absolute Error (MAE): 1.597438 
+Mean Squared Error (MSE): 5.014788
+
+## Subset Selection Linear Regression Model
+
+### 3. Forward Stepwise (20 points)
+
+* Please construct a forward stepwise regression with `abaloneTraining`.
+
+```{r}
+# Ensure the dataset is loaded and abaloneTraining is available
+# abaloneTraining <- read.csv("path_to_your_abalone_training_dataset.csv")
+
+# Convert categorical variables to factors if not already done
+abaloneTraining$Sex <- as.factor(abaloneTraining$Sex)
+
+# Starting with a minimal model - intercept only (no predictors)
+start.model <- lm(Rings ~ 1, data = abaloneTraining)
+
+# Full model with all predictors
+full.model <- lm(Rings ~ ., data = abaloneTraining)
+
+# Perform forward stepwise selection based on AIC
+# The direction="forward" argument starts with the intercept and adds variables
+stepwise.model <- step(start.model, scope = list(lower = start.model, upper = full.model), direction = "forward")
+
+# Display the summary of the selected model
+summary(stepwise.model)
+
+```
+
+* Please indicate the statistical significant features and `RSE` and $R^2$.
+
+>Statistical Significant Features:
+The statistical significance of each feature can be determined by looking at the Pr(>|t|) values in the coefficient table of the model summary.
+
+Significant Features (at a typical significance level of 0.05):
+
+Shell.weight: Highly significant (p-value < 0.001)
+Shucked.weight: Highly significant (p-value < 0.001)
+Diameter: Highly significant (p-value < 0.001)
+SexI: Highly significant (p-value < 0.001)
+Whole.weight: Highly significant (p-value < 0.001)
+Viscera.weight: Highly significant (p-value < 0.001)
+Height: Highly significant (p-value < 0.001)
+SexM: Not statistically significant (p-value = 0.479)
+
+Residual Standard Error (RSE):
+The Residual Standard Error (RSE) is a measure of the average amount that the response variable (Rings) deviates from the predicted value by the model. It provides an estimate of the standard deviation of the model's errors.
+
+Residual Standard Error (RSE):
+RSE: 2.183
+
+Coefficient of Determination (R SQUARE):
+The coefficient of determination (R SQUARE) and adjusted R SQUARE provide information about how well the model fits the data.
+
+Coefficient of Determination (R SQUARE):
+
+Multiple R-squared: 0.5426
+Adjusted R-squared: 0.5415
+
+Interpretation:
+The statistically significant features (Shell.weight, Shucked.weight, Diameter, SexI, Whole.weight, Viscera.weight, Height) have p-values less than 0.05, indicating that they are likely to be important predictors of Rings.
+The non-significant feature (SexM) has a higher p-value (0.479), suggesting that it may not significantly contribute to the prediction of Rings.
+The R SQUARE value of 0.5426 indicates that approximately 54.26% of the variance in Rings can be explained by the predictors included in the model.
+
+In summary, the statistically significant features (Shell.weight, Shucked.weight, Diameter, SexI, Whole.weight, Viscera.weight, Height) are important predictors of Rings, and the model has an R SQUARE of 0.5426, indicating a reasonable fit to the data with these predictors.
+
+* Use this model to predict `Rings` in `abaloneTest` and calculate `MAE` and `MSE`.
+
+```{r}
+# Predict Rings using the fitted model on abaloneTest
+predicted <- predict(model, newdata = abaloneTest)
+
+# Calculate Mean Absolute Error (MAE)
+MAE <- mean(abs(predicted - abaloneTest$Rings))
+
+# Calculate Mean Squared Error (MSE)
+MSE <- mean((predicted - abaloneTest$Rings)^2)
+
+# Print MAE and MSE
+cat("Mean Absolute Error (MAE):", MAE, "\n")
+cat("Mean Squared Error (MSE):", MSE, "\n")
+
+```
+
+> Mean Absolute Error (MAE): 1.597438 
+Mean Squared Error (MSE): 5.014788 
+
+### 4. Backward Stepwise (20 points)
+
+* Please construct a backward stepwise regression with `abaloneTraining`.
+
+```{r}
+# Fit a full model with all predictors
+full_model <- lm(Rings ~ ., data = abaloneTraining)
+
+# Perform backward stepwise regression
+final_model <- step(full_model, direction = "backward")
+
+# Print the final model summary
+summary(final_model)
+
+```
+
+* Please indicate the statistical significant features and `RSE` and $R^2$.
+
+> Statistical Significant Features:
+
+Intercept
+SexI
+Diameter
+Height
+Whole.weight
+Shucked.weight
+Viscera.weight
+Shell.weight
+All these features have associated p-values (Pr(>|t|)) that are less than the standard significance level of 0.05, indicating statistical significance.
+
+Residual Standard Error (RSE):
+RSE: 2.183
+
+The Residual Standard Error (RSE) represents the average deviation of the observed values from the fitted values in the regression model. A lower RSE indicates a better fit of the model to the data.
+
+R-SQUARE (Multiple R-squared) Value:
+Multiple R-SQUARE: 0.5426
+Adjusted R-SQUARE: 0.5415
+
+The R-SQUARE value (Multiple R-squared) of 0.5426 indicates that approximately 54.26% of the variability in the response variable (Rings) is explained by the selected predictors (Sex, Diameter, Height, Whole.weight, Shucked.weight, Viscera.weight, Shell.weight) in the final backward stepwise regression model.
+
+The Adjusted R-SQUARE (0.5415) takes into account the number of predictors in the model and provides a more conservative estimate of the proportion of variance explained.
+
+In summary, the backward stepwise regression has identified a subset of statistically significant predictors that collectively explain a substantial portion of the variability in the response variable (Rings), as indicated by the R-SQUARE value of approximately 0.5426. The model's Residual Standard Error (RSE) of 2.183 reflects the average deviation of observed values from predicted values, further validating the model's goodness of fit.
+
+* Use this model to predict `Rings` in `abaloneTest` and calculate `MAE` and `MSE`.
+
+```{r}
+# Predict Rings using the final_model on abaloneTest dataset
+predictions <- predict(final_model, newdata = abaloneTest)
+
+# Calculate Mean Absolute Error (MAE)
+MAE <- mean(abs(abaloneTest$Rings - predictions))
+
+# Calculate Mean Squared Error (MSE)
+MSE <- mean((abaloneTest$Rings - predictions)^2)
+
+# Display the calculated MAE and MSE
+print(paste("Mean Absolute Error (MAE):", round(MAE, 4)))
+print(paste("Mean Squared Error (MSE):", round(MSE, 4)))
+
+```
+
+> [1] "Mean Absolute Error (MAE): 1.5976"
+[1] "Mean Squared Error (MSE): 5.0147"
+
+## Model Assessment (10 points)
+
+Compare the three regression models, and find the best model based on the assessment measures ($R^2$, RSS, MAE, MSE,etc.). Explain your answer.
+
+> *Multiple Linear Regression Model*:
+R SQUARE (Adjusted R-SQUARE): The multiple R SQUARE of this model is 0.5414, indicating that about 54.14% of the variability in the response variable (Rings) is explained by the predictors included in the model.
+
+Residual Standard Error (RSE): The RSE for this model is 2.184, which measures the average deviation of observed values from the predicted values.
+
+MAE and MSE on Test Data:
+
+MAE: Mean Absolute Error is 1.5974.
+MSE: Mean Squared Error is 5.0148.
+
+*Forward Stepwise Regression Model*:
+R SQUARE (Adjusted R-SQUARE): The multiple R SQUARE of this model is also 0.5415, similar to the multiple linear regression model, explaining approximately 54.15% of the variability in Rings.
+
+Residual Standard Error (RSE): The RSE for this model is 2.183, similar to the RSE of the multiple linear regression model.
+
+MAE and MSE on Test Data:
+
+MAE: Mean Absolute Error is 1.5976.
+MSE: Mean Squared Error is 5.0147.
+
+*Backward Stepwise Regression Model*:
+R SQUARE (Adjusted R-SQUARE): The multiple R SQUARE for this model is again 0.5415, matching the other two models in explaining approximately 54.15% of the variability in Rings.
+
+Residual Standard Error (RSE): The RSE for this model is also 2.183, consistent with the RSE values of the other two models.
+
+MAE and MSE on Test Data:
+
+MAE: Mean Absolute Error is 1.5976.
+MSE: Mean Squared Error is 5.0147.
+
+*Comparison and Conclusion*:
+All three regression models have very similar performance metrics:
+
+They all explain approximately 54.15% of the variability in the Rings dataset, as indicated by their adjusted R SQUARE values.
+The Residual Standard Error (RSE) is consistent across all models, suggesting similar average deviations of observed values from predicted values.
+The Mean Absolute Error (MAE) and Mean Squared Error (MSE) are also consistent across all models, with MAE around 1.597 and MSE around 5.015.
+Based on these assessment measures, there is no significant difference in performance between the three models. They all explain a similar amount of variability in the Rings dataset and exhibit comparable error rates when predicting on the test data.
+
+
+**Best Model Selection**:
+In summary, based purely on the provided assessment measures, all three regression models perform similarly in explaining and predicting the variability in the Rings dataset. The choice of the "best" model could depend on additional factors such as model interpretability, complexity, and specific domain considerations beyond the metrics presented here.
+
